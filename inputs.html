@@ -1,0 +1,259 @@
+<fieldset>			
+	<legend class="clickableLegend">Create a Kid</legend>
+		<form id="newKidForm" method="POST" action="create.php" class="blindableForm" name="new_kid_form">
+			<p class="fieldReq">Fields that must be completed are marked with an asterisk (<span class="mandatory">*</span>).</p>
+			<table class="enterAddressFormTable">
+				<tbody>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_name">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Name:&nbsp;</b>
+								</label>
+								<br />
+								<span class="tiny"></span>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="name" type="text" class="newLocationInput" name="new_name" maxlength="50" size="50" required/>
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_gender">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Gender:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<label style="color:blue;">Male</label>
+								<input type="radio" value="male" name="new_gender" />
+								<label style="color:pink;">Female</label>
+								<input type="radio" value="female" name="new_gender" />
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_age">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Age:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="room" type="text" name="new_age"  maxlength="3" size="5"/>
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_skill_level">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Skill Level:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<select name="new_skill_level">
+									<option value="1">Discovery</option>
+									<option value="2">Exploration</option>
+									<option value="3">Launch</option>
+								</select>
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_interests_passions">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Interests/Passions:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input type="checkbox" value="1" name="new_interests_passions[]"/>Photography
+								<input type="checkbox" value="2" name="new_interests_passions[]"/>Programming
+								<input type="checkbox" value="3" name="new_interests_passions[]"/>Video Games
+								<input type="checkbox" value="4" name="new_interests_passions[]"/>Skateboarding
+								<input type="checkbox" value="5" name="new_interests_passions[]"/>Dogs
+								<input type="checkbox" value="6" name="new_interests_passions[]"/>Basketball
+								<input type="checkbox" value="7" name="new_interests_passions[]"/>Cars
+								<input type="checkbox" value="8" name="new_interests_passions[]"/>Music
+								<input type="checkbox" value="9" name="new_interests_passions[]"/>Baseball
+								<input type="checkbox" value="10" name="new_interests_passions[]"/>Justin Bieber
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label for="new_characteristics">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Characteristics:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input type="checkbox" value="1" name="new_characteristics[]"/>Tall
+								<input type="checkbox" value="2" name="new_characteristics[]"/>Short
+								<input type="checkbox" value="3" name="new_characteristics[]"/>Extrovert
+								<input type="checkbox" value="4" name="new_characteristics[]"/>Introvert
+								<input type="checkbox" value="5" name="new_characteristics[]"/>Confident
+								<input type="checkbox" value="6" name="new_characteristics[]"/>Generous
+								<input type="checkbox" value="7" name="new_characteristics[]"/>Humble
+								<input type="checkbox" value="8" name="new_characteristics[]"/>Adventurous
+								<input type="checkbox" value="9" name="new_characteristics[]"/>Creative
+								<input type="checkbox" value="10" name="new_characteristics[]"/>Exuberant
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="orderLabel" for="new_member_since">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Member Since:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="memberSince" type="text" name="new_member_since" />
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_address_line_1">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Address line 1:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="AddressLine1" type="text" class="newLocationInput" name="new_address_line_1"  maxlength="60" size="50" required/>
+							</span>
+							<br />
+							<span class="tiny">Street address, P.O. box, company name, c/o</span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_address_line_2">
+									<span class="notMandatory"></span>
+									<b>Address line 2:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="AddressLine2" type="text" class="newLocationInput" name="new_address_line_2"  maxlength="60" size="50" />
+							</span>
+							<br />
+							<span class="tiny">Apartment, suite, unit, building, floor, etc.</span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_city">
+									<span class="mandatory">*&nbsp;</span>
+									<b>City:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="city" type="text" class="newLocationInput" name="new_city"  maxlength="50" size="25" required/>
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_state_province_region">
+									<span class="mandatory">*&nbsp;</span>
+									<b>State/Province/Region:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="stateProvinceRegion" type="text" class="newLocationInput" name="new_state_province_region"  maxlength="50" size="15" required/>
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_postal_code">
+									<span class="mandatory">*&nbsp;</span>
+									<b>ZIP/Postal Code:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<input id="postalCode" type="text" class="newLocationInput" name="new_postal_code"  maxlength="20" size="20" required />
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+					<tr>
+						<td class="enterAddressFieldLabel" style="vertical-align:middle;">
+							<span>
+								<label class="locationLabel" for="new_country">
+									<span class="mandatory">*&nbsp;</span>
+									<b>Country:&nbsp;</b>
+								</label>
+							<span>
+						</td>
+						<td>
+							<span>
+								<select id="country" type="text" class="newLocationInput" name="new_country">
+								<?php include 'countries.html'; ?>
+								</select>
+							</span>
+							<br />
+							<span class="tiny"></span>
+						</td>
+					</tr>
+				<tbody>
+			</table>
+			<p id="locationSubmit"><input id="submit" value="Create" type="submit"/></p>					
+		</form>
+</fieldset>
