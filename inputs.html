@@ -52,7 +52,7 @@
 						</td>
 						<td>
 							<span>
-								<input id="room" type="text" name="new_age"  maxlength="3" size="5"/>
+								<input id="age" type="text" name="new_age"  maxlength="3" size="5" required/>
 							</span>
 							<br />
 							<span class="tiny"></span>
@@ -69,7 +69,7 @@
 						</td>
 						<td>
 							<span>
-								<select name="new_skill_level">
+								<select name="new_skill_level" required>
 									<option value="1">Discovery</option>
 									<option value="2">Exploration</option>
 									<option value="3">Launch</option>
@@ -244,7 +244,7 @@
 						</td>
 						<td>
 							<span>
-								<select id="country" type="text" class="newLocationInput" name="new_country">
+								<select id="country" type="text" class="newLocationInput" name="new_country" required>
 								<?php include 'countries.html'; ?>
 								</select>
 							</span>

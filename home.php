@@ -23,24 +23,15 @@
 		$(document).ready(function() {
 			$(function() {
 				$("#memberSince").datepicker({ //edit Order
-				showAnim: "slide",
-				dateFormat: "yy-mm-dd",
-				constrainInput: true,
-				changeYear: true,
-				changeMonth: true,
-				maxDate: "+0d"
-			}); 
+					showAnim: "slide",
+					dateFormat: "yy-mm-dd",
+					constrainInput: true,
+					changeYear: true,
+					changeMonth: true,
+					maxDate: "+0d"
+				}); 
+			});
 		});
-		});
-		/**
-		need field for qty of kids make
-		make randomized traits and lat and lons etc. 
-		make ability to choose how much weight per attribute
-		Interests/passions -- how to match get similarity between two Interests/passions 
-		Characteristics -- how to match get similarity between two characteristics
-		Member since -- calculate # days they have been a member via php
-		Location
-		**/
 		</script>
 		<?php include 'inputs.html'; ?>
 	</head>
@@ -49,7 +40,7 @@
 			<table cellpadding='1' cellspacing='1' id='resultTable' style="border: 1px solid black; margin: 0 auto;">
 				<thead>
 					<tr>
-						<th>Kid Name (id)</th>
+						<th>Kid Name (<em>id</em>)</th>
 						<th>Skill level </th>
 						<th>Interests/Passions</th>
 						<th>Characteristics</th>
@@ -65,7 +56,7 @@
 				while ($row = mysql_fetch_array($kids_query)) {
 					print ("<tr style='border: 1px solid black;'>");
 					print ("<td>");
-					print ($row['name'] . ' (' . $row['id'] . ')');
+					print ($row['name'] . ' (<em>' . $row['id'] . '</em>)');
 					print ("</td>");
 					print ("<td>");
 					print ($row['skill_level']);
@@ -96,7 +87,6 @@
 			?>
 				</tbody>
 			</table>
-
 			<div id="result">
 			<?php include_once 'make_groups.php'; ?>
 			</div>
