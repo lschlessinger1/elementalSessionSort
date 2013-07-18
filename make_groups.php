@@ -1,7 +1,9 @@
 <?php
 /* TO DO: */
 /*Make static comparisons (comparisons that won't change ex: location)
-either have less weight or have an element of randomness to promote new groups */
+either have less weight or have an element of randomness to promote new groups 
+Check when dividing that the value is defined (make sure to check if it equals 0)
+*/
 $server = "localhost";
 $db_username = "lou_schlessinger";
 $db_password = "admin000";
@@ -111,10 +113,15 @@ class Session {
 	private $session = []; // organized array of Kid objects
 	private $num_groups = 4; // for now... -- maybe put in constructor?
 	private $group_quorum = 10; //How many kids are enough to just return one group?
+	private $check_perms = []; // array of permutations of the checks
+	
+	/* initialize the kids and run program */
 	public function __construct($kids){
 		$this->kids = $kids;
 		$this->run();
 	}
+	
+	/* begin program */
 	public function run(){
 		$num_kids = count($this->kids);
 		if($this->group_quorum < $num_kids){
@@ -124,10 +131,14 @@ class Session {
 					array_push($this->match_points_arr, $push_me);
 				}
 			}
+			$final_groups = $this->check_groups($this->create_groups()); 
+			$this->prettify( $final_groups );
+		} elseif($this->group_quorum > $num_kids) {
+			$this->prettify( $this->create_groups() );
 		}
-		//$final_groups = $this->check_groups($this->create_groups()); 
-		$this->prettify( $this->create_groups() ); // will be $final_groups
 	}
+	
+	/* pretty print the results */
 	public function prettify($the_groups){
 		$c = 1;
 		foreach($the_groups as $g){
@@ -184,9 +195,11 @@ class Session {
 				}
 				echo '</tbody>';
 				echo '</table>';
-				$c++; //    :)
+				$c++; // :)
 			}
 	}
+	
+	/* Gets match points for each kid pair*/
 	public function get_match_points($kid_a, $kid_b) {
 		$match_points = 0;
 		$match_points += rand(1,10); // to promote new groups
@@ -202,20 +215,20 @@ class Session {
 		+ $characteristics + $gender_points + $days_of_membership_points + $location_points;
 		return intval($match_points);
 	}
+	
+	/* makes match point array, sorts it (high to low) and returns the best possible groups */
 	public function create_groups(){
-		// perform some other checks such as balancing boys and girls.
-		// how can I find scenario with most match points?
 		$num_groups = $this->num_groups;
 		$num_kids = count($this->kids);
-		//$kids_per_group = $this->make_groups($num_groups, $num_kids);
-		
 		$tmp = array(); 
 		foreach($this->match_points_arr as &$kid) {
 			$tmp[] = &$kid['match_points']; 
 		}
 		array_multisort($tmp, SORT_DESC, $this->match_points_arr); 
-		return $this->get_best_groups(); // multi-dimensional array of groups with kids
+		return $this->get_best_groups();
 	}
+	
+	/* gets the best groups based on match points -- multi-dimensional array of groups with kids */
 	public function get_best_groups(){ 
 		$return_me = [];
 		$num_kid_pairs = 0;
@@ -234,7 +247,9 @@ class Session {
 		}
 		return $return_me;
 	}
-	public function in_array_r($needle, $haystack, $strict = false) { //recursive in_array()
+	
+	/* recursive in_array() */
+	public function in_array_r($needle, $haystack, $strict = false) {
 		foreach ($haystack as $item) {
 			if (($strict ? $item === $needle : $item == $needle) || (is_array($item) && $this->in_array_r($needle, $item, $strict))) {
 				return true;
@@ -242,6 +257,8 @@ class Session {
 		}
 		return false;
 	}
+	
+	/* return match points for a kid pair based on their skill levels */
 	public function compare_skill_level($kid_a, $kid_b){ // either 1, 2, or 3
 		// should this be linear? 
 		$skill_level_points = 0;
@@ -251,6 +268,8 @@ class Session {
 		$skill_level_points += $diff;
 		return $skill_level_points;
 	}
+		
+	/* return match points for a kid pair based on their ages */
 	public function compare_age($kid_a, $kid_b){
 		$age_points = 0;
 		$age_a = $kid_a->get_age();
@@ -263,6 +282,8 @@ class Session {
 		$age_points += $diff;
 		return $age_points;
 	}
+		
+	/* return match points for a kid pair based on their interests/passions */
 	public function compare_interests_passions($kid_a, $kid_b){ // what will be format of interests/passions?
 		$interests_passions_points = 0;
 		$interests_passions_a = explode(', ', $kid_a->get_interests_passions()); 
@@ -275,6 +296,8 @@ class Session {
 		// go through each kid and see how common it is for a kid to have certain interests/passions 
 		return $interests_passions_points;
 	}
+	
+	/* return match points for a kid pair based on their characteristics */
 	public function compare_characteristics($kid_a, $kid_b){
 		$characteristics_points = 0;
 		$characteristics_a = explode(', ', $kid_a->get_characteristics()); // does this work????
@@ -287,6 +310,8 @@ class Session {
 		// go through each kid and see how common it is for a kid to have certain characteristics 
 		return $characteristics_points;
 	}
+	
+	/* return match points for a kid pair based on their gender */
 	public function compare_gender($kid_a, $kid_b){
 		$gender_points = 0;
 		$gender_a = $kid_a->get_gender();
@@ -297,6 +322,8 @@ class Session {
 		// if else if different return constant
 		return $gender_points;
 	}
+	
+	/* return match points for a kid pair based on how long they have been members */
 	public function compare_days_of_membership($kid_a, $kid_b){
 		$days_of_membership_points = 0;
 		$days_of_membership_a = intval($kid_a->get_days_of_membership());
@@ -310,6 +337,8 @@ class Session {
 		}
 		return $days_of_membership_points;
 	}
+	
+	/* return match points for a kid pair based on where they live */
 	public function compare_location($kid_a, $kid_b){
 		// logarithmic
 		$location_points = 0;
@@ -317,7 +346,7 @@ class Session {
 		$lon_a = $kid_a->get_lon();
 		$lat_b = $kid_b->get_lat();
 		$lon_b = $kid_b->get_lon();
-		$distance = $this->haversine_great_circle_distance($lat_a, $lon_a, $lat_b, $lon_b, $earthRadius = 6371); // in kilometres. 6,371,000 for meters
+		$distance = $this->haversine_great_circle_distance($lat_a, $lon_a, $lat_b, $lon_b, $earthRadius = 6371);  
 		if($distance == 0){
 			return 0;
 		} elseif($distance < 10){ //if within 10km
@@ -327,6 +356,8 @@ class Session {
 		}
 		return $location_points;
 	}
+	
+	/* return distance in metric units,if $earthRadius = 6371, answer will be in kilometres. 6,371,000 for meters */
 	public function haversine_great_circle_distance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371) {
 		// convert from degrees to radians
 		$latFrom = deg2rad($latitudeFrom);
@@ -343,36 +374,54 @@ class Session {
 		cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 		return $angle * $earthRadius;
 	}
-	# Check and make new groups if necessary 
+	/* check and make new groups if necessary */
 	public function check_groups($final_group_arr){
 		$tmp = $final_group_arr;
 		$ok = $this->check_all($tmp);
-		$num_checks = 3; // make this an attribute and every check make the attr++ 
 		if($ok){
 			return $tmp;
 		} elseif(!$ok){
-			for($i=0; $i<$this->factorial($num_checks); $i++){
-				if($this->check_all($tmp)){
-					break;
+			$checks_to_run = array('optimize_gender','optimize_age','optimize_skill_level');//
+			$this->pc_permute($checks_to_run);
+			$checks = $this->check_perms;
+			foreach($checks as $permutation){
+				foreach($permutation as $func){
+					if($this->check_all($tmp)){
+						break;
+					} else {
+						call_user_func(array($this,$func),$tmp);
+					}
 				}
 			}
 		}
+		
 		// check the checks! - see if one check makes another group imbalanced
 		//check gender balance
 		//check age (make sure it's not fifteen 15yr olds and one 4yr old)
-		// ABC, ACB, BAC, BCA, CBA, CAB
+		// A,B and C = function() ABC, ACB, BAC, BCA, CBA, CAB
 		//while there is an imbalance, check every possible combination of checks, then break
 		//while(check_all($tmp) == true){} 
 		return $tmp;
 	}
-	public function factorial($n){
-		if($n < 2){
-			return 1;
+	
+	
+	/*check every permutation of check, set check_perms*/
+	public function pc_permute($items, $perms = array()) {
+		if (empty($items)) { 
+			array_push($this->check_perms, $perms);
 		} else {
-			return $n * factorial($n-1);
+			for ($i = count($items) - 1; $i >= 0; --$i) {
+				 $newitems = $items;
+				 $newperms = $perms;
+				 list($foo) = array_splice($newitems, $i, 1);
+				 array_unshift($newperms, $foo);
+				 $this->pc_permute($newitems, $newperms);
+			 }
 		}
 	}
-	public function check_gender($final_group_arr){ // returns true if ok
+	
+	/* returns true if OK (no imbalance) */
+	public function check_gender($final_group_arr){ 
 		//define what imbalance is worth fixing and if it's possible
 		$tmp = $final_group_arr;
 		$fixable = false; // if its possible to fix (if an imbalance exists but its not possible to fix )
@@ -398,50 +447,127 @@ class Session {
 			}
 			array_push($gender_group_nums, array('males' => $group_num_males, 'females' => $group_num_females));
 		}
+		$num_groups = count($gender_group_nums);
 		foreach($gender_group_nums as $genders){
 			$males = intval($genders['males']);
 			$females = intval($genders['females']);
 			$ratio = (double) $males / $females;
 			// if males:females --> 3:1 or 1:3 
-			if($ratio > 3 || $ratio < (1/3)){ // worth fixing
+			if($ratio > 3 || $ratio < (1/3)){ // worth fixing if > 75% boys or girls
 				$worth_fixing == true;
-				//$total_num_males
-				//$total_num_females
-				//if()
+				// see if it's possible to fix
+				// if putting another gender wouldn't mess up the 3:1 ratio in another group
+				$best_num_males = $total_num_males / $num_groups;
+				$best_num_females = $total_num_females / $num_groups;
+				$male_deviation = abs(100*(($best_num_males - $males) / ($males))); // percent difference from ideal #
+				$female_deviation = abs(100*(($best_num_females - $females) / ($females))); // percent difference from ideal #
+				$pct = 75; // if it's 75% different
+				if($male_deviation > $pct || $female_deviation > $pct ){
+					$fixable == true;
+				}
 			}
 		}
-		
 		if($fixable && $worth_fixing){
 			return false;
 		} else {
-			return true; // for now
+			return true; 
 		}
 	}
+	
+	/* returns true if OK (age distribution isn't a problem) */
 	public function check_age($final_group_arr){ // returns true if ok
 		//define what imbalance is worth fixing and if it's possible
 		$tmp = $final_group_arr;
-		//check other checks
-		return true; // for now
+		$fixable = false; // if its possible to fix (if an imbalance exists but its not possible to fix )
+		$worth_fixing = false;
+		/* I'm not sure what boss man wants for age distribution within groups... so not worth making now.*/
+		return true; // for now...
 	}
-	public function check_skill_level($final_group_arr){ // returns true if ok
+	
+	/* returns true if OK (no imbalance of skill levels) */
+	public function check_skill_level($final_group_arr){ 
 		//define what imbalance is worth fixing and if it's possible
 		$tmp = $final_group_arr;
-		//check other checks
-		return true; // for now
+		$fixable = false; // if its possible to fix (if an imbalance exists but its not possible to fix )
+		$worth_fixing = false;
+		//(ex: worth_fixing == false if there is a good balance of male/females)
+		//get num of each level
+		$total_num_first = 0; // discovery
+		$total_num_second = 0; // exploration
+		$total_num_third = 0; // launch
+		$skill_level_group_nums = array();
+		foreach($tmp as $grp){
+			$group_num_first = 0;
+			$group_num_second = 0;
+			$group_num_third = 0;
+			foreach($grp as $kid_id){
+				$skill_level = $this->get_kid_by_id($kid_id)->get_skill_level();
+				if($skill_level == '1'){
+					$group_num_first++;
+					$total_num_first++;
+				} elseif($skill_level == '2'){
+					$group_num_second++;
+					$total_num_second++;
+				} elseif($skill_level == '3'){
+					$group_num_third++;
+					$total_num_third++;
+				}
+			}
+			array_push($skill_level_group_nums, array('firsts' => $group_num_first, 'seconds' => $group_num_second, 'thirds' =>$group_num_third));
+		}
+		$num_groups = count($skill_level_group_nums);
+		foreach($skill_level_group_nums as $skill_levels){
+			$firsts = intval($skill_levels['firsts']);
+			$seconds = intval($skill_levels['seconds']);
+			$thirds = intval($skill_levels['thirds']);
+			$total = $firsts + $seconds + $thirds;
+			$pct_first = (double) 100*($firsts / $total); 
+			$pct_second = (double) 100*($seconds / $total);
+			$pct_third = (double) 100*($thirds / $total);
+			// if any skill level has more than 75% of a group
+			if($pct_first > 70 || $pct_second > 70 || $pct_third > 70){ // worth fixing if > 75% 1s or 2s or 3s 
+				$worth_fixing == true;
+				// see if it's possible to fix
+				//best num per group
+				$best_num_first = $total_num_first / $num_groups; 
+				$best_num_second = $total_num_second / $num_groups; 
+				$best_num_third = $total_num_third / $num_groups; 
+				$first_deviation = abs(100*(($best_num_first - $firsts) / ($firsts))); // percent difference from ideal #
+				$second_deviation = abs(100*(($best_num_second - $seconds) / ($seconds))); // percent difference from ideal #
+				$third_deviation = abs(100*(($best_num_third - $thirds) / ($thirds))); // percent difference from ideal #
+				$pct = 75; // if it's 75% different from ideal
+				if($male_deviation > $pct || $female_deviation > $pct || $third_deviation > $pct){
+					$fixable == true;
+				}
+			}
+		}
+		if($fixable && $worth_fixing){
+			return false;
+		} else {
+			return true; 
+		}
 	}
-	public function make_best_gender_groups($final_group_arr){ // returns new groups
+	
+	/* returns new groups optimized by gender distribution */
+	public function optimize_gender($final_group_arr){
 		$tmp = $final_group_arr;
 		return $tmp;
 	}
-	public function make_best_age_groups($final_group_arr){ // returns new groups
+	
+	/* returns new groups optimized by age distribution */
+	public function optimize_age($final_group_arr){ 
 		$tmp = $final_group_arr;
 		return $tmp;
 	}
-	public function make_best_skill_level_groups($final_group_arr){ // returns new groups
+	
+	/* returns new groups optimized by skill level distribution */
+	public function optimize_skill_level($final_group_arr){ 
 		$tmp = $final_group_arr;
 		return $tmp;
 	}
-	public function check_all($final_group_arr){ // returns true if ok	
+	
+	/* returns true if all checks are OK */
+	public function check_all($final_group_arr){
 		$tmp = $final_group_arr;
 		if($this->check_gender($tmp) && $this->check_age($tmp) && $this->check_skill_level($tmp) ){
 			return true;
@@ -449,6 +575,8 @@ class Session {
 			return false;
 		}
 	}
+	
+	/* returns kid object by id */
 	public function get_kid_by_id($kid_id){
 		foreach($this->kids as $kid_obj){
 			if($kid_obj->get_id() == $kid_id){
