@@ -22,7 +22,7 @@
 		<script>
 		$(document).ready(function() {
 			$(function() {
-				$("#memberSince").datepicker({ //edit Order
+				$("#memberSince").datepicker({ //edit Member Since
 					showAnim: "slide",
 					dateFormat: "yy-mm-dd",
 					constrainInput: true,

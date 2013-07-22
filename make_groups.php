@@ -9,9 +9,8 @@ $db_username = "lou_schlessinger";
 $db_password = "admin000";
 $connection = mysql_connect($server, $db_username, $db_password) or die('connection error: '.mysql_error());
 $db = mysql_select_db("ethree_test", $connection) or die('database selection error: '.mysql_error());
-
 $kids_query = mysql_query('SELECT * FROM kids') or die('couldn\'t get kids '.mysql_error());
-
+ini_set('max_execution_time', 300); // set max_execution_time to 5 minutes (300 seconds)
 $kids  = [];
 while ($row = mysql_fetch_array($kids_query)) {
 	array_push($kids, new Kid($row['id'], $row['name'], $row['skill_level'],
@@ -109,9 +108,9 @@ class Kid {
 }
 class Session {
 	private $kids; // disorganized array of Kid objects
-	private $match_points_arr = []; // $kid_a.id => [kid_b.id => matchpoints between kid_a and kid_b]
+	private $match_points_arr = []; // array of ($kid_a.id => kid_b.id, [match_points] => num_points)
 	private $session = []; // organized array of Kid objects
-	private $num_groups = 4; // for now... -- maybe put in constructor?
+	private $num_groups = 3; // for now... - maybe put in constructor?
 	private $group_quorum = 10; //How many kids are enough to just return one group?
 	private $check_perms = []; // array of permutations of the checks
 	
@@ -124,16 +123,16 @@ class Session {
 	/* begin program */
 	public function run(){
 		$num_kids = count($this->kids);
-		if($this->group_quorum < $num_kids){
+		if($this->group_quorum < $num_kids && $this->num_groups > 1){
 			for($i=0; $i < $num_kids; $i++){
 				for($j=0; $j<$i; $j++){
 					$push_me = array($this->kids[$i]->get_id() => $this->kids[$j]->get_id() ,'match_points' => $this->get_match_points($this->kids[$i], $this->kids[$j])); // compare Kid_a with kid_b 
 					array_push($this->match_points_arr, $push_me);
 				}
 			}
-			$final_groups = $this->check_groups($this->create_groups()); 
-			$this->prettify( $final_groups );
-		} elseif($this->group_quorum > $num_kids) {
+			//$final_groups = $this->check_groups($this->create_groups()); 
+			$this->prettify( $this->create_groups() ); // will be: $this->prettify( $final_groups )
+		} elseif($this->group_quorum > $num_kids || $this->num_groups == 1) {
 			$this->prettify( $this->create_groups() );
 		}
 	}
@@ -199,7 +198,7 @@ class Session {
 			}
 	}
 	
-	/* Gets match points for each kid pair*/
+	/* gets match points for each kid pair */
 	public function get_match_points($kid_a, $kid_b) {
 		$match_points = 0;
 		$match_points += rand(1,10); // to promote new groups
@@ -210,7 +209,6 @@ class Session {
 		$gender_points = $this->compare_gender($kid_a, $kid_b);
 		$days_of_membership_points = $this->compare_days_of_membership($kid_a, $kid_b);
 		$location_points = $this->compare_location($kid_a, $kid_b);
-		// any other criteria I need?
 		$match_points += $skill_level_points + $age_points + $interests_passions_points
 		+ $characteristics + $gender_points + $days_of_membership_points + $location_points;
 		return intval($match_points);
@@ -218,8 +216,6 @@ class Session {
 	
 	/* makes match point array, sorts it (high to low) and returns the best possible groups */
 	public function create_groups(){
-		$num_groups = $this->num_groups;
-		$num_kids = count($this->kids);
 		$tmp = array(); 
 		foreach($this->match_points_arr as &$kid) {
 			$tmp[] = &$kid['match_points']; 
@@ -231,23 +227,86 @@ class Session {
 	/* gets the best groups based on match points -- multi-dimensional array of groups with kids */
 	public function get_best_groups(){ 
 		$return_me = [];
-		$num_kid_pairs = 0;
+		$num_kids = 0;
 		for($i=0; $i<$this->num_groups; $i++){
 			array_push($return_me, array());
 		}
-		foreach($this->match_points_arr as &$kid_pair) {
+		foreach($this->match_points_arr as $kid_pair) {
 			$kid_a = key($kid_pair);
 			$kid_b = $kid_pair[$kid_a];
-			if(!$this->in_array_r($kid_a, $return_me) && !$this->in_array_r($kid_b, $return_me) && !$this->in_array_r($return_me,$kid_pair)){
-				//push kid pair
-				array_push($return_me[$num_kid_pairs % $this->num_groups], $kid_a);
-				array_push($return_me[$num_kid_pairs % $this->num_groups], $kid_b);
-				$num_kid_pairs++;
+			if(!$this->in_array_r($kid_a, $return_me) && !$this->in_array_r($kid_b, $return_me)){
+				// first iteration add the best kid pairs
+				$group_index = $num_kids % $this->num_groups;
+				if($num_kids/2 < $this->num_groups){
+					array_push($return_me[$group_index], $kid_a);
+					array_push($return_me[$group_index], $kid_b);
+				}
+				$num_kids+=2;
+			}
+		}
+		for($i=0; $i<(count($this->kids)/$this->num_groups)-1; $i++){
+			$group_index = $i % $this->num_groups;
+			foreach($return_me as $group){
+				$grp_kid_ids = [];
+				foreach($group as $kid){
+					array_push($grp_kid_ids, $kid);
+				}
+				$next_best_kid = $this->find_best_match($grp_kid_ids, $return_me);
+				if(!empty($grp_kid_ids) && !empty($next_best_kid)){
+					array_push($return_me[$group_index], $next_best_kid);
+				}
 			}
 		}
 		return $return_me;
 	}
 	
+	/* given a group, get the kid with highest match points with the group */
+	public function find_best_match($group, $all_groups){
+		$tmp = $group;
+		$best = [];
+		$possibles = [];
+		
+		foreach($tmp as $kid_in_grp){
+			$kid_matches = [];
+			foreach($this->match_points_arr as $kid){
+				$kid_a = key($kid);
+				$kid_b = $kid[$kid_a];
+				if($kid_a == $kid_in_grp){
+					array_push($kid_matches, $kid);
+				} elseif($kid_b == $kid_in_grp){
+					array_push($kid_matches, $kid);
+				}
+			}
+			array_push($best, $kid_matches);
+		}
+		foreach($best as $kid){
+			foreach($kid as $possible_match){
+				$kid_a = key($possible_match);
+				$kid_b = $possible_match[$kid_a];
+				$top_kid = [];
+				if((!$this->in_array_r($kid_a, $all_groups) || !$this->in_array_r($kid_b, $all_groups)) && !empty($possible_match)){
+					array_push($top_kid, $possible_match);
+					break;
+				}
+			}
+			if(!empty($top_kid)){
+				array_push($possibles, $top_kid);
+			}
+		}
+		//get last kid in possibles
+		if(!empty($possibles)){
+			usort($possibles, function (array $a, array $b){ return $a[0]["match_points"] - $b[0]["match_points"]; });
+			$end = end($possibles)[0];
+			$kid_1 = key($end);
+			$kid_2 = $end[$kid_1];
+			if(!in_array($kid_1, $tmp)){
+				return $kid_1;
+			} elseif(!in_array($kid_2, $tmp)){
+				return $kid_2;
+			}
+		}
+	}
+
 	/* recursive in_array() */
 	public function in_array_r($needle, $haystack, $strict = false) {
 		foreach ($haystack as $item) {
@@ -374,6 +433,7 @@ class Session {
 		cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 		return $angle * $earthRadius;
 	}
+	
 	/* check and make new groups if necessary */
 	public function check_groups($final_group_arr){
 		$tmp = $final_group_arr;
@@ -393,19 +453,11 @@ class Session {
 					}
 				}
 			}
+			return $tmp;
 		}
-		
-		// check the checks! - see if one check makes another group imbalanced
-		//check gender balance
-		//check age (make sure it's not fifteen 15yr olds and one 4yr old)
-		// A,B and C = function() ABC, ACB, BAC, BCA, CBA, CAB
-		//while there is an imbalance, check every possible combination of checks, then break
-		//while(check_all($tmp) == true){} 
-		return $tmp;
 	}
 	
-	
-	/*check every permutation of check, set check_perms*/
+	/*check every permutation of optimizations, set check_perms*/
 	public function pc_permute($items, $perms = array()) {
 		if (empty($items)) { 
 			array_push($this->check_perms, $perms);
@@ -532,6 +584,7 @@ class Session {
 				$best_num_first = $total_num_first / $num_groups; 
 				$best_num_second = $total_num_second / $num_groups; 
 				$best_num_third = $total_num_third / $num_groups; 
+				// make sure not to divide by 0
 				$first_deviation = abs(100*(($best_num_first - $firsts) / ($firsts))); // percent difference from ideal #
 				$second_deviation = abs(100*(($best_num_second - $seconds) / ($seconds))); // percent difference from ideal #
 				$third_deviation = abs(100*(($best_num_third - $thirds) / ($thirds))); // percent difference from ideal #
