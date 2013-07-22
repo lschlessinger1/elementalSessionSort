@@ -236,16 +236,16 @@ class Session {
 			$kid_b = $kid_pair[$kid_a];
 			if(!$this->in_array_r($kid_a, $return_me) && !$this->in_array_r($kid_b, $return_me)){
 				// first iteration add the best kid pairs
-				$group_index = $num_kids % $this->num_groups;
+				$group_index = $num_kids/2 % $this->num_groups;
 				if($num_kids/2 < $this->num_groups){
 					array_push($return_me[$group_index], $kid_a);
 					array_push($return_me[$group_index], $kid_b);
+					$num_kids+=2;
 				}
-				$num_kids+=2;
 			}
 		}
-		for($i=0; $i<(count($this->kids)/$this->num_groups)-1; $i++){
-			$group_index = $i % $this->num_groups;
+		for($i=0; $i<floor((count($this->kids)/$this->num_groups)-1); $i++){
+			$j = 0;
 			foreach($return_me as $group){
 				$grp_kid_ids = [];
 				foreach($group as $kid){
@@ -253,8 +253,10 @@ class Session {
 				}
 				$next_best_kid = $this->find_best_match($grp_kid_ids, $return_me);
 				if(!empty($grp_kid_ids) && !empty($next_best_kid)){
-					array_push($return_me[$group_index], $next_best_kid);
-				}
+					array_push($return_me[$j % $this->num_groups], $next_best_kid);
+					$num_kids+=1;
+					$j++;
+				} 
 			}
 		}
 		return $return_me;
@@ -319,7 +321,6 @@ class Session {
 	
 	/* return match points for a kid pair based on their skill levels */
 	public function compare_skill_level($kid_a, $kid_b){ // either 1, 2, or 3
-		// should this be linear? 
 		$skill_level_points = 0;
 		$skill_level_a = $kid_a->get_skill_level();
 		$skill_level_b = $kid_b->get_skill_level();
@@ -343,7 +344,7 @@ class Session {
 	}
 		
 	/* return match points for a kid pair based on their interests/passions */
-	public function compare_interests_passions($kid_a, $kid_b){ // what will be format of interests/passions?
+	public function compare_interests_passions($kid_a, $kid_b){
 		$interests_passions_points = 0;
 		$interests_passions_a = explode(', ', $kid_a->get_interests_passions()); 
 		$interests_passions_b = explode(', ', $kid_b->get_interests_passions());
@@ -359,7 +360,7 @@ class Session {
 	/* return match points for a kid pair based on their characteristics */
 	public function compare_characteristics($kid_a, $kid_b){
 		$characteristics_points = 0;
-		$characteristics_a = explode(', ', $kid_a->get_characteristics()); // does this work????
+		$characteristics_a = explode(', ', $kid_a->get_characteristics());
 		$characteristics_b = explode(', ', $kid_b->get_characteristics());
 		// for now return a number based on if the numbers match
 		$common_characteristics = count(array_intersect($characteristics_a, $characteristics_b));
@@ -378,7 +379,6 @@ class Session {
 		if($gender_a !== $gender_b){
 			$gender_points += 5;
 		}
-		// if else if different return constant
 		return $gender_points;
 	}
 	
@@ -388,7 +388,6 @@ class Session {
 		$days_of_membership_a = intval($kid_a->get_days_of_membership());
 		$days_of_membership_b = intval($kid_b->get_days_of_membership());
 		$diff = abs($days_of_membership_a - $days_of_membership_b);
-		//default value if under 100 days?
 		if($days_of_membership_a < 100 && $days_of_membership_b < 100){ // then they are considered N00B5
 			$days_of_membership_points += 3;
 		} elseif($diff >= 100){
@@ -399,7 +398,6 @@ class Session {
 	
 	/* return match points for a kid pair based on where they live */
 	public function compare_location($kid_a, $kid_b){
-		// logarithmic
 		$location_points = 0;
 		$lat_a = $kid_a->get_lat();
 		$lon_a = $kid_a->get_lon();
