@@ -13,14 +13,14 @@ $member_since = mysql_real_escape_string(htmlentities(trim($_POST['new_member_si
 $now = time(); 
 $my_date = strtotime($member_since);
 $datediff = $now - $my_date;
-$days_of_membership = floor($datediff/(60*60*24)); // >= 1
-$interests_passions = ''; // 1 - 10
-$characteristics = ''; // 1 - 10
-foreach($_POST['new_interests_passions'] as $item){
-	$interests_passions .= $item . ', ';
+$days_of_membership = floor($datediff/(60*60*24)); 
+$interests = ''; 
+$traits = ''; 
+foreach($_POST['new_interests'] as $item){
+	$interests .= $item . ', ';
 }
-foreach($_POST['new_characteristics'] as $item){
-	$characteristics .= $item . ', ';
+foreach($_POST['new_traits'] as $item){
+	$traits .= $item . ', ';
 }
 
 $address_line_1 = mysql_real_escape_string(htmlentities(trim($_POST['new_address_line_1'])));
@@ -36,8 +36,8 @@ $get = file_get_contents($url);
 $lat = json_decode($get)->results[0]->geometry->location->lat;
 $lon = json_decode($get)->results[0]->geometry->location->lng;
 
-mysql_query("INSERT INTO kids (skill_level, interests_passions, characteristics, name, gender, age, days_of_membership, lat, lon)
- VALUES ('".$skill_level."', '".substr($interests_passions,0,-2)."', '".substr($characteristics,0,-2)."', '".$name."', '".$gender."', '".$age."', '".$days_of_membership."', '".$lat."', '".$lon."')") or die ("Could not perform query... ".mysql_error());
+mysql_query("INSERT INTO kids (skill_level, interests, traits, name, gender, age, days_of_membership, lat, lon)
+ VALUES ('".$skill_level."', '".substr($interests,0,-2)."', '".substr($traits,0,-2)."', '".$name."', '".$gender."', '".$age."', '".$days_of_membership."', '".$lat."', '".$lon."')") or die ("Could not perform query... ".mysql_error());
 mysql_close($connection);
 header("Location:home.php");
 exit;

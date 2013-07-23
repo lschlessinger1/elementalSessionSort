@@ -11,33 +11,46 @@ $connection = mysql_connect($server, $db_username, $db_password) or die('connect
 $db = mysql_select_db("ethree_test", $connection) or die('database selection error: '.mysql_error());
 $kids_query = mysql_query('SELECT * FROM kids') or die('couldn\'t get kids '.mysql_error());
 ini_set('max_execution_time', 300); // set max_execution_time to 5 minutes (300 seconds)
+// time the script
+$mtime = microtime(); 
+$mtime = explode(" ",$mtime); 
+$mtime = $mtime[1] + $mtime[0]; 
+$starttime = $mtime;
+
 $kids  = [];
+$num_groups = $_POST['num_groups'];
+if (isset($_POST["num_groups"]) && !empty($_POST["num_groups"])) {
+    $num_groups = mysql_real_escape_string(htmlentities(trim($num_groups))); 
+} else {  
+    $num_groups = 3;
+}
 while ($row = mysql_fetch_array($kids_query)) {
 	array_push($kids, new Kid($row['id'], $row['name'], $row['skill_level'],
-	$row['age'], $row['interests_passions'], $row['characteristics'], $row['gender'],
+	$row['age'], $row['interests'], $row['traits'], $row['gender'],
 	$row['days_of_membership'], $row['lat'], $row['lon']));
 }
-$session = new Session($kids);
+
+$elemental_session  = new ElementalSession($kids, $num_groups);
 
 class Kid {
 	private $id;
 	private $name;
 	private $skill_level;
 	private $age;
-	private $interests_passions;
-	private $characteristics;
+	private $interests;
+	private $traits;
 	private $gender;
 	private $days_of_membership;
 	private $lat;
 	private $lon;
 	
-	public function __construct($id, $name, $skill_level, $age, $interests_passions, $characteristics, $gender, $days_of_membership, $lat, $lon){
+	public function __construct($id, $name, $skill_level, $age, $interests, $traits, $gender, $days_of_membership, $lat, $lon){
 		$this->id = $id;
 		$this->name = $name;
 		$this->skill_level = $skill_level;
 		$this->age = $age;
-		$this->interests_passions = $interests_passions;
-		$this->characteristics = $characteristics;
+		$this->interests = $interests;
+		$this->traits = $traits;
 		$this->gender = $gender;
 		$this->days_of_membership = $days_of_membership;
 		$this->lat = $lat;
@@ -68,17 +81,17 @@ class Kid {
 	public function set_age($age){
 		$this->age = $age;
 	}
-	public function get_interests_passions(){
-		return $this->interests_passions;
+	public function get_interests(){
+		return $this->interests;
 	}
-	public function set_interests_passions($interests_passions){
-		$this->interests_passions = $interests_passions;
+	public function set_interests($interests){
+		$this->interests = $interests;
 	}
-	public function get_characteristics(){
-		return $this->characteristics;
+	public function get_traits(){
+		return $this->traits;
 	}
-	public function set_characteristics($characteristics){
-		$this->characteristics = $characteristics;
+	public function set_traits($traits){
+		$this->traits = $traits;
 	}
 	public function get_gender(){
 		return $this->gender;
@@ -106,17 +119,18 @@ class Kid {
 	}
 	/** END Getter and Setter methods**/
 }
-class Session {
+class ElementalSession {
 	private $kids; // disorganized array of Kid objects
 	private $match_points_arr = []; // array of ($kid_a.id => kid_b.id, [match_points] => num_points)
 	private $session = []; // organized array of Kid objects
-	private $num_groups = 3; // for now... - maybe put in constructor?
+	private $num_groups; // for now... - maybe put in constructor?
 	private $group_quorum = 10; //How many kids are enough to just return one group?
 	private $check_perms = []; // array of permutations of the checks
 	
 	/* initialize the kids and run program */
-	public function __construct($kids){
+	public function __construct($kids, $num_groups){
 		$this->kids = $kids;
+		$this->num_groups = $num_groups;
 		$this->run();
 	}
 	
@@ -148,8 +162,8 @@ class Session {
 					<tr>
 						<th>Kid Name (<em>id</em>)</th>
 						<th>Skill level </th>
-						<th>Interests/Passions</th>
-						<th>Characteristics</th>
+						<th>Interests</th>
+						<th>Traits</th>
 						<th>Gender</th>
 						<th>Age</th>
 						<th>Days of Membership</th>
@@ -165,17 +179,30 @@ class Session {
 						print ("<td style='border-right: 1px solid gray;'>");
 						print ($row['name'] . ' (<em>' . $row['id'] . '</em>)');
 						print ("</td>");
-						print ("<td style='border-right: 1px solid gray;'>");
-						print ($row['skill_level']);
+						if($row['skill_level'] == '1'){
+							print ("<td style='border-right: 1px solid gray;'>");
+							print ($row['skill_level']);
+						} elseif($row['skill_level'] == '2'){
+							print ("<td style='border-right: 1px solid gray; background: #B0B0B0 ; color: white;'>");
+							print ($row['skill_level']);
+						} elseif($row['skill_level'] == '3'){
+							print ("<td style='border-right: 1px solid gray; background: #484848; color: white;'>");
+							print ($row['skill_level']);
+						}
 						print ("</td>");
 						print ("<td style='border-right: 1px solid gray;'>");
-						print ($row['interests_passions']);
+						print ($row['interests']);
 						print ("</td>");
 						print ("<td style='border-right: 1px solid gray;'>");
-						print ($row['characteristics']);
+						print ($row['traits']);
 						print ("</td>");
-						print ("<td style='border-right: 1px solid gray;'>");
-						print ($row['gender']);
+						if($row['gender'] == 'male'){
+							print ("<td style='border-right: 1px solid gray; background: blue; color: white;'>");
+							print ($row['gender']);
+						} elseif($row['gender'] == 'female'){
+							print ("<td style='border-right: 1px solid gray; background: pink; color: white;'>");
+							print ($row['gender']);
+						} 
 						print ("</td>");
 						print ("<td style='border-right: 1px solid gray;'>");
 						print ($row['age']);
@@ -204,13 +231,13 @@ class Session {
 		$match_points += rand(1,10); // to promote new groups
 		$skill_level_points = $this->compare_skill_level($kid_a, $kid_b);
 		$age_points = $this->compare_age($kid_a, $kid_b);
-		$interests_passions_points = $this->compare_interests_passions($kid_a, $kid_b);
-		$characteristics = $this->compare_characteristics($kid_a, $kid_b);
+		$interests_points = $this->compare_interests($kid_a, $kid_b);
+		$traits = $this->compare_traits($kid_a, $kid_b);
 		$gender_points = $this->compare_gender($kid_a, $kid_b);
 		$days_of_membership_points = $this->compare_days_of_membership($kid_a, $kid_b);
 		$location_points = $this->compare_location($kid_a, $kid_b);
-		$match_points += $skill_level_points + $age_points + $interests_passions_points
-		+ $characteristics + $gender_points + $days_of_membership_points + $location_points;
+		$match_points += $skill_level_points + $age_points + $interests_points
+		+ $traits + $gender_points + $days_of_membership_points + $location_points;
 		return intval($match_points);
 	}
 	
@@ -344,31 +371,31 @@ class Session {
 	}
 		
 	/* return match points for a kid pair based on their interests/passions */
-	public function compare_interests_passions($kid_a, $kid_b){
-		$interests_passions_points = 0;
-		$interests_passions_a = explode(', ', $kid_a->get_interests_passions()); 
-		$interests_passions_b = explode(', ', $kid_b->get_interests_passions());
+	public function compare_interests($kid_a, $kid_b){
+		$interests_points = 0;
+		$interests_a = explode(', ', $kid_a->get_interests()); 
+		$interests_b = explode(', ', $kid_b->get_interests());
 		// look for synonyms
 		// for now return a number based on if the numbers match
-		$common_interests_passions = count(array_intersect($interests_passions_a, $interests_passions_b));
-		$interests_passions_points += $common_interests_passions;
+		$common_interests = count(array_intersect($interests_a, $interests_b));
+		$interests_points += $common_interests;
 		/* in future */
 		// go through each kid and see how common it is for a kid to have certain interests/passions 
-		return $interests_passions_points;
+		return $interests_points;
 	}
 	
-	/* return match points for a kid pair based on their characteristics */
-	public function compare_characteristics($kid_a, $kid_b){
-		$characteristics_points = 0;
-		$characteristics_a = explode(', ', $kid_a->get_characteristics());
-		$characteristics_b = explode(', ', $kid_b->get_characteristics());
+	/* return match points for a kid pair based on their traits */
+	public function compare_traits($kid_a, $kid_b){
+		$traits_points = 0;
+		$traits_a = explode(', ', $kid_a->get_traits());
+		$traits_b = explode(', ', $kid_b->get_traits());
 		// for now return a number based on if the numbers match
-		$common_characteristics = count(array_intersect($characteristics_a, $characteristics_b));
-		$characteristics_points += $common_characteristics;
+		$common_traits = count(array_intersect($traits_a, $traits_b));
+		$traits_points += $common_traits;
 		/* in future */
 		// look for synonyms
-		// go through each kid and see how common it is for a kid to have certain characteristics 
-		return $characteristics_points;
+		// go through each kid and see how common it is for a kid to have certain traits 
+		return $traits_points;
 	}
 	
 	/* return match points for a kid pair based on their gender */
@@ -636,4 +663,11 @@ class Session {
 		}
 	}
 }
+
+$mtime = microtime(); 
+$mtime = explode(" ",$mtime); 
+$mtime = $mtime[1] + $mtime[0]; 
+$endtime = $mtime; 
+$totaltime = ($endtime - $starttime); 
+echo "Total time: ".round($totaltime, 2)." seconds"; 
 ?>
