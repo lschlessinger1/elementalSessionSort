@@ -19,11 +19,19 @@ $starttime = $mtime;
 
 $kids  = [];
 $num_groups = $_POST['num_groups'];
-if (isset($_POST["num_groups"]) && !empty($_POST["num_groups"])) {
-    $num_groups = mysql_real_escape_string(htmlentities(trim($num_groups))); 
-} else {  
-    $num_groups = 3;
-}
+/* comparison weighting inputs */
+$age_weighting = $_POST['age']; 
+$skill_level_weighting = $_POST['skill_level']; 
+$interests_weighting = $_POST['interests']; 
+$traits_weighting = $_POST['traits']; 
+$gender_weighting = $_POST['gender']; 
+$days_of_membership_weighting = $_POST['days_of_membership'];
+$distance_weighting = $_POST['distance'];
+((isset($_POST["num_groups"]) && !empty($_POST["num_groups"])) ? 
+$num_groups = mysql_real_escape_string(htmlentities(trim($num_groups))) :  
+$num_groups = 3);
+
+
 while ($row = mysql_fetch_array($kids_query)) {
 	array_push($kids, new Kid($row['id'], $row['name'], $row['skill_level'],
 	$row['age'], $row['interests'], $row['traits'], $row['gender'],
@@ -200,7 +208,7 @@ class ElementalSession {
 							print ("<td style='border-right: 1px solid gray; background: blue; color: white;'>");
 							print ($row['gender']);
 						} elseif($row['gender'] == 'female'){
-							print ("<td style='border-right: 1px solid gray; background: pink; color: white;'>");
+							print ("<td style='border-right: 1px solid gray; background: pink; color: #8B0000;'>");
 							print ($row['gender']);
 						} 
 						print ("</td>");
@@ -294,7 +302,6 @@ class ElementalSession {
 		$tmp = $group;
 		$best = [];
 		$possibles = [];
-		
 		foreach($tmp as $kid_in_grp){
 			$kid_matches = [];
 			foreach($this->match_points_arr as $kid){
@@ -348,17 +355,17 @@ class ElementalSession {
 	
 	/* return match points for a kid pair based on their skill levels */
 	public function compare_skill_level($kid_a, $kid_b){ // either 1, 2, or 3
-		$skill_level_points = 0;
+		$skill_level_points = 1;
 		$skill_level_a = $kid_a->get_skill_level();
 		$skill_level_b = $kid_b->get_skill_level();
 		$diff = abs($skill_level_a - $skill_level_b); // so if they are same level - no match points
-		$skill_level_points += $diff;
+		$skill_level_points += $diff*$this->get_comparison_weight('skill_level');
 		return $skill_level_points;
 	}
 		
 	/* return match points for a kid pair based on their ages */
 	public function compare_age($kid_a, $kid_b){
-		$age_points = 0;
+		$age_points = 1;
 		$age_a = $kid_a->get_age();
 		$age_b = $kid_b->get_age();
 		$diff = abs($age_a - $age_b); // so if they are same level - no match points
@@ -366,19 +373,19 @@ class ElementalSession {
 		// but does it matter if kid_a.age is 4 and kid_b.age is 7
 		// versus kid_a.age is 14 and kid_age.age is 17 ????
 		// are age points linear?
-		$age_points += $diff;
+		$age_points += $diff*$this->get_comparison_weight('age');
 		return $age_points;
 	}
 		
 	/* return match points for a kid pair based on their interests/passions */
 	public function compare_interests($kid_a, $kid_b){
-		$interests_points = 0;
+		$interests_points = 1;
 		$interests_a = explode(', ', $kid_a->get_interests()); 
 		$interests_b = explode(', ', $kid_b->get_interests());
 		// look for synonyms
 		// for now return a number based on if the numbers match
 		$common_interests = count(array_intersect($interests_a, $interests_b));
-		$interests_points += $common_interests;
+		$interests_points += $common_interests*$this->get_comparison_weight('interests');
 		/* in future */
 		// go through each kid and see how common it is for a kid to have certain interests/passions 
 		return $interests_points;
@@ -386,12 +393,12 @@ class ElementalSession {
 	
 	/* return match points for a kid pair based on their traits */
 	public function compare_traits($kid_a, $kid_b){
-		$traits_points = 0;
+		$traits_points = 1;
 		$traits_a = explode(', ', $kid_a->get_traits());
 		$traits_b = explode(', ', $kid_b->get_traits());
 		// for now return a number based on if the numbers match
 		$common_traits = count(array_intersect($traits_a, $traits_b));
-		$traits_points += $common_traits;
+		$traits_points += $common_traits*$this->get_comparison_weight('traits');
 		/* in future */
 		// look for synonyms
 		// go through each kid and see how common it is for a kid to have certain traits 
@@ -400,18 +407,20 @@ class ElementalSession {
 	
 	/* return match points for a kid pair based on their gender */
 	public function compare_gender($kid_a, $kid_b){
-		$gender_points = 0;
+		$gender_points = 1;
 		$gender_a = $kid_a->get_gender();
 		$gender_b = $kid_b->get_gender();
 		if($gender_a !== $gender_b){
-			$gender_points += 5;
+			$gender_points += 3 + $this->get_comparison_weight('gender');
+		} elseif($gender_a == $gender_b){
+			$gender_points += $this->get_comparison_weight('gender');
 		}
 		return $gender_points;
 	}
 	
 	/* return match points for a kid pair based on how long they have been members */
 	public function compare_days_of_membership($kid_a, $kid_b){
-		$days_of_membership_points = 0;
+		$days_of_membership_points = 1;
 		$days_of_membership_a = intval($kid_a->get_days_of_membership());
 		$days_of_membership_b = intval($kid_b->get_days_of_membership());
 		$diff = abs($days_of_membership_a - $days_of_membership_b);
@@ -420,12 +429,14 @@ class ElementalSession {
 		} elseif($diff >= 100){
 			$days_of_membership_points += 3;
 		}
+		$days_of_membership_points++;
+		$days_of_membership_points *= $this->get_comparison_weight('days_of_membership');
 		return $days_of_membership_points;
 	}
 	
 	/* return match points for a kid pair based on where they live */
 	public function compare_location($kid_a, $kid_b){
-		$location_points = 0;
+		$location_points = 1;
 		$lat_a = $kid_a->get_lat();
 		$lon_a = $kid_a->get_lon();
 		$lat_b = $kid_b->get_lat();
@@ -438,6 +449,7 @@ class ElementalSession {
 		} elseif($distance >= 10){
 			$location_points += round(log($distance));
 		}
+		 $location_points *= $this->get_comparison_weight('distance');
 		return $location_points;
 	}
 	
@@ -661,6 +673,17 @@ class ElementalSession {
 				return $kid_obj;
 			}
 		}
+	}
+
+	/*returns a specific value given a category*/
+	public function get_comparison_weight($category){
+			switch ($category){
+			case $category:
+				return isset($_POST[$category]) && !empty($_POST[$category]) ? intval($_POST[$category]) : 0;
+				break;
+			default:
+				return 0;
+			}
 	}
 }
 
