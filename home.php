@@ -74,8 +74,14 @@
 				 };
 				 $.post("make_groups.php", comparisonWeights, function(result){
 					$("#result").html(result);
+					$(function(){
+					$('#makeNewGroups').button();
+						$('#makeNewGroups').on('click',function () {
+							  location.reload();	
+						});
+					});
 				  });
-			    $('.hide').hide();
+				$(".hide").hide("slow");
 			    $(function() {
 					$( "#progressbar" ).progressbar({
 						value: false
@@ -222,7 +228,6 @@
 					$('.scrollup').fadeOut();
 				}
 			}); 
-	 
 			$('.scrollup').click(function(){
 				$("html, body").animate({ scrollTop: 0 }, 600);
 				return false;
@@ -237,10 +242,13 @@
 	<div id="content">
 		<div id="tabs">
 			<ul>
-				<li><a href="#tabs-1">Create a kid</a></li>
-				<li><a href="#tabs-2">Session</a></li>
 				<li><a href="#tabs-3">Groups</a></li>
+				<li><a href="#tabs-2">Session</a></li>
+				<li><a href="#tabs-1">Create a kid</a></li>
 			</ul>
+			<div id="tabs-3">
+				<?php include 'new_group.html'; ?>
+			</div>
 			<div id="tabs-1">
 				<?php include 'inputs.html'; ?>
 			</div>
@@ -295,9 +303,6 @@
 			?>
 				</tbody>
 			</table>
-			</div>
-			<div id="tabs-3">
-				<?php include 'new_group.html'; ?>
 			</div>
 		</div>
 			<?php mysql_close($connection); ?>

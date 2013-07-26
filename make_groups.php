@@ -157,11 +157,28 @@ class ElementalSession {
 		} elseif($this->group_quorum > $num_kids || $this->num_groups == 1) {
 			$this->prettify( $this->create_groups() );
 		}
+		echo '<pre>';
+		$tmp = [23,29, 32, 99];
+		$best = [];
+		foreach($tmp as $kid_in_grp){
+			$kid_matches = [];
+			foreach($this->match_points_arr as $pair){
+				$kid_a = key($pair);
+				$kid_b = $pair[$kid_a];
+				if($kid_a == $kid_in_grp){
+					array_push($kid_matches, $pair);
+				} elseif($kid_b == $kid_in_grp){
+					array_push($kid_matches, $pair);
+				}
+			}
+			array_push($best, $kid_matches);
+		}
 	}
 	
 	/* pretty print the results */
 	public function prettify($the_groups){
 		$c = 1;
+		echo '<a id="makeNewGroups" href="#">Make New Groups</a>';
 		foreach($the_groups as $g){
 			echo '<h3 style="text-align:center; margin-bottom: -10px;">Group # '.$c.'</h3>';
 			echo '<table cellpadding="1" cellspacing="1" style="border: 1px solid red; margin:0 auto;">';
@@ -679,10 +696,10 @@ class ElementalSession {
 	public function get_comparison_weight($category){
 			switch ($category){
 			case $category:
-				return isset($_POST[$category]) && !empty($_POST[$category]) ? intval($_POST[$category]) : 0;
+				return isset($_POST[$category]) && !empty($_POST[$category]) ? intval($_POST[$category]) : 1;
 				break;
 			default:
-				return 0;
+				return 1;
 			}
 	}
 }
